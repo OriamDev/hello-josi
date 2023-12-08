@@ -1,0 +1,74 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container-fluid">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Vendas</h1>
+        <a href="/vendas/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="fa fa-plus-square mr-2"></i>Nova Venda</a>
+    </div>
+
+    <% if(message && message.type && message.text) {%>
+        <div class="alert alert-<%= message.type %> alert-dismissible fade show" role="alert">
+            <%= message.text %>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    <% }%>
+
+    <div class="container-fluid">
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Data</th>
+                <th>Hora</th>
+                <th>Pagamento</th>
+                <th>Subtotal</th>
+                <th>Impostos</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <% if(vendas) { %>
+                <% vendas.forEach(function (venda, index) { %>
+
+                    <tr>
+                        <th scope="row"><%= index + 1 %></th>
+                        <td><%= venda.nome_cliente %></td>
+                        <td><%= venda.data_pedido.toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: 'numeric'}) %></td>
+                        <td><%= venda.hora_pedido %></td>
+                        <td><%= venda.metodo_pagamento %></td>
+                        <td><%= parseFloat(venda.subtotal_pedidos).toFixed(2) %>€</td>
+                        <td><%= parseFloat(venda.imposto_pedidos).toFixed(2) %>€</td>
+                        <td>
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <a href="/vendas/edit/<%= venda.id_pedido %>" type="button" class="btn btn-primary">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <form method="POST" action="/vendas/delete/<%= venda.id_pedido %>">
+                                    <button type="submit"
+                                            style="border-top-left-radius: 0;border-bottom-left-radius: 0;"
+                                            class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+
+                <% }) %>
+            <% } %>
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+<%- include('../partials/footer') %>

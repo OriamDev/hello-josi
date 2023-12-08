@@ -1,0 +1,61 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Novo Cliente</h1>
+    </div>
+
+    <% if(message && message.type && message.text) {%>
+        <div class="alert alert-<%= message.type %> alert-dismissible fade show" role="alert">
+            <%= message.text %>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    <% }%>
+
+    <form action="/clientes" method="POST">
+
+        <div class="mb-3">
+            <label for="nome_cliente" class="form-label">Nome do cliente</label>
+            <input type="text" class="form-control" id="nome_cliente" name="nome_cliente" value="">
+        </div>
+
+        <div class="mb-3">
+            <label for="email_cliente" class="form-label">Email do cliente</label>
+            <input type="email" class="form-control" id="email_cliente" name="email_cliente" value="">
+        </div>
+
+        <div class="mb-3">
+            <label for="morada_cliente" class="form-label">Morada do cliente</label>
+            <input type="text" class="form-control" id="morada_cliente" name="morada_cliente" value="">
+        </div>
+
+
+        <div class="row mb-3">
+            <div class="col-4">
+                <label for="pais_cliente" class="form-label">Pais do cliente</label>
+                <input type="text" class="form-control" id="pais_cliente" name="pais_cliente" value="">
+            </div>
+            <div class="col-4">
+                <label for="cidade_cliente" class="form-label">Cidade do cliente</label>
+                <input type="text" class="form-control" id="cidade_cliente" name="cidade_cliente" value="">
+            </div>
+            <div class="col-4">
+                <label for="telefone_cliente" class="form-label">Telefone do cliente</label>
+                <input type="text" class="form-control" id="telefone_cliente" name="telefone_cliente" value="">
+            </div>
+        </div>
+
+
+        <button type="submit" class="btn btn-primary w-100">Guardar Funcionario</button>
+
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

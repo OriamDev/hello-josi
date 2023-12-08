@@ -1,0 +1,93 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Novo Projeto</h1>
+    </div>
+
+    <% if(message && message.type && message.text) {%>
+        <div class="alert alert-<%= message.type %> alert-dismissible fade show" role="alert">
+            <%= message.text %>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    <% }%>
+
+    <form action="/projetos/" method="POST">
+
+        <div class="mb-3">
+            <label for="nome_projeto" class="form-label">Nome do Projeto</label>
+            <input type="text" class="form-control" id="nome_projeto" name="nome_projeto" value="">
+        </div>
+
+
+        <div class="row mb-3">
+
+            <div class="col-6">
+                <label for="id_cliente">Cliente do projeto</label>
+                <select class="form-select form-control"  id="id_cliente" name="id_cliente">
+                    <option selected value="">Escolher o cliente para o projeto</option>
+                    <% clientes.forEach(cliente => { %>
+                        <option value="<%= cliente.id_cliente %>"><%= cliente.nome_cliente %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="col-6">
+                <label for="servico_projeto">Serviço do projeto</label>
+                <select class="form-select form-control"  id="servico_projeto" name="servico_projeto">
+                    <option selected value="">Escolher o serviço do projeto</option>
+                    <% servicos.forEach(servico => { %>
+                        <option value="<%= servico %>"><%= servico %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="row mb-3">
+
+            <div class="col-6">
+                <label for="data_inicio_projeto" class="form-label">Data de inicio do projeto</label>
+                <input class="form-control" type="date" id="data_inicio_projeto" name="data_inicio_projeto" value="">
+            </div>
+
+            <div class="col-6">
+                <label for="data_fim_projeto" class="form-label">Data de fim do projeto</label>
+                <input class="form-control" type="date" id="data_fim_projeto" name="data_fim_projeto" value="">
+            </div>
+
+        </div>
+
+        <div class="row mb-3">
+
+            <div class="col-6">
+                <label for="preco_projeto" class="form-label">Preço do projeto</label>
+                <input class="form-control" type="number" id="preco_projeto" name="preco_projeto" value="">
+            </div>
+
+            <div class="col-6">
+                <label for="estado_projeto">Estado do projeto</label>
+                <select class="form-select form-control"  id="estado_projeto" name="estado_projeto">
+                    <option selected value="">Escolher o estado do projeto</option>
+                    <% estadosDoProjeto.forEach(estado => { %>
+                        <option value="<%= estado %>"><%= estado %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+        </div>
+
+
+        <button type="submit" class="btn btn-primary w-100">Guardar Projeto</button>
+
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,70 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container-fluid">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Produtos</h1>
+        <a href="/products/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fa fa-plus-square mr-2"></i>Novo produto</a>
+    </div>
+
+    <% if(message && message.type && message.text) {%>
+        <div class="alert alert-<%= message.type %>" role="alert">
+            <%= message.text %>
+        </div>
+    <% }%>
+
+    <div class="container-fluid">
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Imagem</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Preço</th>
+                <th>Estado</th>
+                <th>Desconto</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+                <% if(products) { %>
+                    <% products.forEach(function (product, index) { %>
+
+                    <tr>
+                        <th scope="row"><%= index + 1 %></th>
+                        <td><img src="/uploads/<%= product.imagem_produto %>" alt="" width="50px;"></td>
+                        <td><%= product.nome_produto %></td>
+                        <td><%= product.categoria_produto %></td>
+                        <td><%= parseFloat(product.preco_produto).toFixed(2) %> €</td>
+                        <td><%= product.estado_produto %></td>
+                        <td><%= parseFloat(product.desconto_produto ?? 0).toFixed(2) %>%</td>
+                        <td>
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <a href="/products/edit/<%= product.id_produto %>" type="button" class="btn btn-primary">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <form method="POST" action="/products/delete/<%= product.id_produto %>">
+                                    <button type="submit"
+                                            style="border-top-left-radius: 0;border-bottom-left-radius: 0;"
+                                            class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+
+                <% }) %>
+                <% } %>
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+<%- include('../partials/footer') %>

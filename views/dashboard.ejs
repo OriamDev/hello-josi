@@ -1,0 +1,100 @@
+<%- include('partials/head') %>
+
+<%- include('partials/sidebar')%>
+
+<%- include('partials/topbar') %>
+
+<div class="container-fluid">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total de Vendas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%- total_vendas %> €</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Projetos a Decorrer</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%- projetos_decorrer %></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Produtos Disponíveis</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%- produtos_disponiveis %></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Próximos Projetos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <% proximosProjetos.forEach(projeto => { %>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1"><%= projeto.nome_projeto %></h5>
+                                    <small><%= projeto.data_fim_projeto.toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: 'numeric'}) %></small>
+                                </div>
+                                <p class="mb-1"><%= projeto.nome_cliente %></p>
+                                <small>{projeto1_servicio}</small>
+                            </a>
+                        <% }) %>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Melhores Clientes</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <% melhoresClientes.forEach(cliente => { %>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1"><%= cliente.nome_cliente %></h5>
+                                    <h4><%= parseFloat(cliente.total).toFixed(2) %> €</h4>
+                                </div>
+                                <p class="mb-1"><%= cliente.pais_cliente %></p>
+                            </a>
+                        <% }) %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<%- include('partials/footer') %>

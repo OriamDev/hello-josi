@@ -1,0 +1,118 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container-fluid">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Nova Venda</h1>
+        <div class="">
+            <a href="/vendas/create/carrinho" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
+                <i class="fa fa-shopping-cart mr-2"></i>Ver carrinho <b>(<%= carrinho.length %>)</b></a>
+            <a href="/vendas/create" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
+                <i class="fa fa-plus-square mr-2"></i>Finalizar Venda</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-8">
+            <% if(message && message.type && message.text) {%>
+                <div class="alert alert-<%= message.type %>" role="alert">
+                    <%= message.text %>
+                </div>
+            <% }%>
+
+            <div class="row">
+
+                <% if(produtos) { %>
+                    <% produtos.forEach(produto => { %>
+                        <div class="col-12 col-md-4 col-lg-3 mb-3">
+                            <div class="card">
+                                <img class="card-img-top" src="/uploads/<%= produto.imagem_produto %>" alt="Card image cap" style="width: 100%; height: 200px; object-fit: contain;">
+                                <div class="card-body">
+                                    <h5 class="card-title"><%= produto.nome_produto %></h5>
+                                    <h6><%= produto.categoria_produto %></h6>
+                                    <p class="card-text"><%- produto.precoHtml %></p>
+                                    <a href="/vendas/create/adicionar-produto/<%= produto.id_produto %>" class="btn btn-sm btn-primary">
+                                        <i class="fa fa-shopping-cart"></i>
+                                        Comprar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+        </div>
+        <div class="col-4" style="border-left: 1px solid #e3e6f0;">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th class="text-center">Price</th>
+                    <th class="text-center">Total</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <% carrinho.forEach(produto => { %>
+                    <tr>
+                    <td class="col-sm-8 col-md-6">
+                        <div class="media">
+                            <a class="thumbnail pull-left" href="#">
+                                <img class="media-object" src="/uploads/<%= produto.imagem_produto %>" style="width: 72px; height: 72px; object-fit: contain"> </a>
+                            <div class="media-body ml-3">
+                                <h4 class="media-heading"><a href="#"><%= produto.nome_produto %></a></h4>
+                                <h5 class="media-heading"> by <a href="#">Brand name</a></h5>
+                                <span>Status: </span><span class="text-success"><strong>In Stock</strong></span>
+                            </div>
+                        </div></td>
+                    <td class="col-sm-1 col-md-1" style="text-align: center">
+                        <input type="email" class="form-control" id="exampleInputEmail1" value="<%= produto.quantidade %>">
+                    </td>
+                    <td class="col-sm-1 col-md-1 text-center"><strong>$4.87</strong></td>
+                    <td class="col-sm-1 col-md-1 text-center"><strong>$14.61</strong></td>
+                    <td class="col-sm-1 col-md-1 text-right">
+                        <button type="button" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                    </td>
+                </tr>
+                <% }) %>
+                <tr>
+                    <td colspan="3"></td>
+                    <td><h5>Subtotal</h5></td>
+                    <td class="text-right"><h5><strong>$24.59</strong></h5></td>
+                </tr>
+                <tr>
+                    <td colspan="3"></td>
+                    <td><h5>Estimated shipping</h5></td>
+                    <td class="text-right"><h5><strong>$6.94</strong></h5></td>
+                </tr>
+                <tr>
+                    <td colspan="3"></td>
+                    <td><h3>Total</h3></td>
+                    <td class="text-right"><h3><strong>$31.53</strong></h3></td>
+                </tr>
+                <tr>
+                    <td colspan="3"></td>
+                    <td>
+                        <button type="button" class="btn btn-default">
+                            <span class="glyphicon glyphicon-shopping-cart"></span> Continue Shopping
+                        </button></td>
+                    <td>
+                        <button type="button" class="btn btn-success">
+                            Checkout <span class="glyphicon glyphicon-play"></span>
+                        </button></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
+</div>
+
+<%- include('../partials/footer') %>

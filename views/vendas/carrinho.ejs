@@ -1,0 +1,49 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container-fluid">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Carrinho</h1>
+        <div class="">
+            <a href="/vendas/create" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
+                <i class="fa fa-arrow-left mr-2"></i>Voltar</a>
+            <a href="/vendas/create/finalizar" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
+                <i class="fa fa-plus-square mr-2"></i>Finalizar Venda</a>
+        </div>
+    </div>
+
+    <% if(message && message.type && message.text) {%>
+        <div class="alert alert-<%= message.type %>" role="alert">
+            <%= message.text %>
+        </div>
+    <% }%>
+
+    <div class="row">
+
+        <% if(produtos) { %>
+            <% produtos.forEach(produto => { %>
+                <div class="col-12 col-md-3 col-lg-2">
+                    <div class="card">
+                        <img class="card-img-top" src="/uploads/<%= produto.imagem_produto %>" alt="Card image cap" style="height: 200px; object-fit: contain;">
+                        <div class="card-body">
+                            <h5 class="card-title"><%= produto.nome_produto %></h5>
+                            <h6><%= produto.categoria_produto %></h6>
+                            <p class="card-text"><%- produto.precoHtml %></p>
+                            <a href="/vendas/create/adicionar-produto/<%= produto.id_produto %>" class="btn btn-sm btn-primary">
+                                <i class="fa fa-shopping-cart"></i>
+                                Comprar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        <% } %>
+    </div>
+
+</div>
+
+<%- include('../partials/footer') %>

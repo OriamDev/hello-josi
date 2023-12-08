@@ -1,0 +1,77 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Editar Produto - <%= produto.nome_produto %></h1>
+    </div>
+
+    <% if(message && message.type && message.text) {%>
+        <div class="alert alert-<%= message.type %>" role="alert">
+            <%= message.text %>
+        </div>
+    <% }%>
+
+    <form action="/products/update/<%= produto.id_produto %>" method="POST" enctype="multipart/form-data">
+
+        <div class="row mb-3">
+            <div class="col-6">
+                <img src="/uploads/<%= produto.imagem_produto %>" alt="" width="300px">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="imagem_produto" class="form-label">Imagem do produto</label>
+            <input class="form-control" type="file" id="imagem_produto" name="imagem_produto">
+        </div>
+
+        <div class="mb-3">
+            <label for="nome_produto" class="form-label">Nome do produto</label>
+            <input type="text" class="form-control" id="nome_produto" name="nome_produto" value="<%= produto.nome_produto %>">
+        </div>
+
+        <div class="mb-3">
+            <label for="categoria_produto" class="form-label">Categoria do produto</label>
+            <select class="form-select form-control"  id="categoria_produto" name="categoria_produto">
+                <option selected value="">Escolher a categoria do produto</option>
+                <% categoriasDoProduto.forEach(categoria => { %>
+                    <option value="<%= categoria %>" <%= categoria === produto.categoria_produto ? 'selected' : '' %>><%= categoria %></option>
+                <% }) %>
+            </select>
+        </div>
+
+        <div class="row mb-3">
+
+            <div class="col-12 col-md-4">
+                <label for="preco_produto" class="form-label">Preço do produto</label>
+                <input class="form-control" type="number" id="preco_produto" name="preco_produto" value="<%= parseFloat(produto.preco_produto).toFixed(2) %>">
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label for="estado_produto" class="form-label">Estado do produto</label>
+                <select class="form-select form-control"  id="estado_produto" name="estado_produto">
+                    <option selected value="">Escolher o estado do produto</option>
+                    <% estadosDoProduto.forEach(estado => { %>
+                        <option value="<%= estado %>" <%= estado === produto.estado_produto ? 'selected' : '' %>><%= estado %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label for="desconto_produto" class="form-label">Deconto do produto</label>
+                <input class="form-control" type="number" id="desconto_produto" name="desconto_produto" value="<%= parseFloat(produto.desconto_produto ?? 0).toFixed(2) %>">
+            </div>
+
+        </div>
+
+
+        <button type="submit" class="btn btn-primary w-100">Guardar alterações</button>
+
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

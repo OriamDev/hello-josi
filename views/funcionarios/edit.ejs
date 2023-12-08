@@ -1,0 +1,85 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Editar Funcionario -- <%= funcionario.nome_funcionario %></h1>
+    </div>
+
+    <% if(message && message.type && message.text) {%>
+        <div class="alert alert-<%= message.type %>" role="alert">
+            <%= message.text %>
+        </div>
+    <% }%>
+
+    <form action="/funcionarios/update/<%= funcionario.id_funcionario %>" method="POST">
+
+        <div class="mb-3">
+            <label for="nome_funcionario" class="form-label">Nome do funcionario</label>
+            <input type="text" class="form-control" id="nome_funcionario" name="nome_funcionario" value="<%= funcionario.nome_funcionario %>">
+        </div>
+
+
+        <div class="row mb-3">
+            <div class="col-6">
+                <label for="email_funcionario" class="form-label">Email do funcionario</label>
+                <input type="email" class="form-control" id="email_funcionario" name="email_funcionario" value="<%= funcionario.email_funcionario %>">
+            </div>
+
+            <div class="col-6">
+                <label for="servico_funcionario">Serviço do funcionario</label>
+                <select class="form-select form-control"  id="servico_funcionario" name="servico_funcionario">
+                    <option selected value="">Escolher o serviço do funcionario</option>
+                    <% servicos.forEach(servico => { %>
+                        <option value="<%= servico %>" <%= funcionario.servico_funcionario === servico ? 'selected' : '' %>><%= servico %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="row mb-3">
+
+            <div class="col-12 col-md-4">
+                <label for="salario_funcionario" class="form-label">Salario do funcionario</label>
+                <input class="form-control" type="number" id="salario_funcionario" name="salario_funcionario" value="<%= parseFloat(funcionario.salario_funcionario).toFixed(2) %>">
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label for="regime_funcionario" class="form-label">Regime do funcionario</label>
+                <select class="form-select form-control"  id="regime_funcionario" name="regime_funcionario">
+                    <option selected value="">Escolher o regime do funcionario</option>
+                    <option value="Full-Time" <%= funcionario.regime_funcionario === 'Full-Time' ? 'selected' : '' %>>Full-Time</option>
+                    <option value="Part-Time" <%= funcionario.regime_funcionario === 'Part-Time' ? 'selected' : '' %>>Part-Time</option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label for="data_nascimento_funcionario" class="form-label">Data de nascimento do funcionario</label>
+                <input class="form-control" type="date" id="data_nascimento_funcionario" name="data_nascimento_funcionario"
+                       value="<%= funcionario.data_nascimento_funcionario %>">
+            </div>
+
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-6">
+                <label for="palavra_passe_funcionario" class="form-label">Palavra-passe do funcionario</label>
+                <input type="password" class="form-control" id="palavra_passe_funcionario" name="palavra_passe_funcionario" value="">
+            </div>
+            <div class="col-6">
+                <label for="confirmar_palavra_passe_funcionario" class="form-label">Confirmar palavra-passe do funcionario</label>
+                <input type="password" class="form-control" id="confirmar_palavra_passe_funcionario" name="confirmar_palavra_passe_funcionario" value="">
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Guardar Funcionario</button>
+
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

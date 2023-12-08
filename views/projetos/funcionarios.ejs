@@ -1,0 +1,51 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Adicionar funcionarios ao Projeto</h1>
+    </div>
+
+    <% if(message && message.type && message.text) {%>
+        <div class="alert alert-<%= message.type %> alert-dismissible fade show" role="alert">
+            <%= message.text %>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    <% }%>
+
+    <form action="/projetos/funcionarios/<%= projeto.id_projeto %>" method="POST">
+
+        <div class="mb-3">
+            <label for="id_cliente">Escolher Funcionarios para o projeto</label>
+            <% if(funcionarios) { %>
+                <div class="row mt-3">
+                    <% funcionarios.forEach(funcionario => { %>
+                        <div class="col-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       name="projeto_funcionarios[]"
+                                       <%= funcionariosDoProjeto.includes(funcionario.id_funcionario) ? 'checked' : '' %>
+                                       type="checkbox" value="<%= funcionario.id_funcionario %>"
+                                       id="funcionario_<%= funcionario.id_funcionario %>">
+                                <label class="form-check-label" for="funcionario_<%= funcionario.id_funcionario %>"><%= funcionario.nome_funcionario %></label>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } %>
+        </div>
+
+
+
+        <button type="submit" class="btn btn-primary w-100">Guardar Projeto</button>
+
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

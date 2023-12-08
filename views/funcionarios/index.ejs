@@ -1,0 +1,71 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container-fluid">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Funcionarios</h1>
+        <a href="/funcionarios/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fa fa-plus-square mr-2"></i>Novo funcionario</a>
+    </div>
+
+    <% if(message && message.type && message.text) {%>
+        <div class="alert alert-<%= message.type %> alert-dismissible fade show" role="alert">
+            <%= message.text %>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    <% }%>
+
+    <div class="container-fluid">
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Regime</th>
+                <th>Salario</th>
+                <th>Serviço</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <% if(funcionarios) { %>
+                <% funcionarios.forEach(function (funcionario, index) { %>
+
+                    <tr>
+                        <th scope="row"><%= index + 1 %></th>
+                        <td><%= funcionario.nome_funcionario %></td>
+                        <td><%= funcionario.email_funcionario %></td>
+                        <td><%= funcionario.regime_funcionario %></td>
+                        <td><%= parseFloat(funcionario.salario_funcionario).toFixed(2) %> €</td>
+                        <td><%= funcionario.servico_funcionario %></td>
+                        <td>
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <a href="/funcionarios/edit/<%= funcionario.id_funcionario %>" type="button" class="btn btn-primary">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <form method="POST" action="/funcionarios/delete/<%= funcionario.id_funcionario %>">
+                                    <button type="submit"
+                                            style="border-top-left-radius: 0;border-bottom-left-radius: 0;"
+                                            class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+
+                <% }) %>
+            <% } %>
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+<%- include('../partials/footer') %>
