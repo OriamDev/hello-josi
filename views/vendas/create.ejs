@@ -69,10 +69,13 @@
                     <td class="col-sm-1 col-md-1 text-center"><strong><%= produto.preco %></strong>€</td>
                     <td class="col-sm-1 col-md-1 text-center"><strong><%= (produto.preco * produto.quantidade).toFixed(2) %>€</strong></td>
                     <td class="col-sm-1 col-md-1 text-right">
-                        <button type="button" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                        <a href="/vendas/create/remover-produto/<%= produto.id_produto %>" class="btn btn-danger"><i class="fa fa-trash"></i></a>
                     </td>
                 </tr>
                 <% }) %>
+                </tbody>
+            </table>
+            <table class="w-100">
                 <tr>
                     <td colspan="3"></td>
                     <td><h5>Subtotal</h5></td>
@@ -88,13 +91,30 @@
                     <td><h3>Total</h3></td>
                     <td class="text-right"><h3><strong><%= total.toFixed(2) %>€</strong></h3></td>
                 </tr>
-                <tr>
-                    <td colspan="3"></td>
-                    <td colspan="2">
-                        <a href="/vendas/create" class="d-none d-sm-inline-block btn btn-primary shadow-sm w-100">
-                            <i class="fa fa-plus-square mr-2"></i>Finalizar Venda</a>
-                </tr>
-                </tbody>
+                <% if(carrinho.length) { %>
+                    <tr>
+                        <td colspan="3"></td>
+                        <td style="vertical-align: baseline;"><h5>Cliente</h5></td>
+                        <td class="text-right">
+                            <form action="/vendas/finalizar-venda" method="POST">
+                                <select class="form-select form-control"  id="id_cliente" name="id_cliente">
+                                        <option selected value="">Escolher o cliente para a venda</option>
+                                        <% clientes.forEach(cliente => { %>
+                                            <option value="<%= cliente.id_cliente %>"><%= cliente.nome_cliente %></option>
+                                        <% }) %>
+                                    </select>
+                                <select class="form-select form-control mt-2"  id="metodo_pagamento" name="metodo_pagamento">
+                                    <option selected value="">Escolher o metodo de pagamento</option>
+                                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                    <option value="PayPal">PayPal</option>
+                                    <option value="Transferência Bancária">Transferência Bancária</option>
+                                </select>
+                                <button type="submit" class="d-none d-sm-inline-block btn btn-primary shadow-sm w-100 mt-3">
+                                        <i class="fa fa-plus-square mr-2"></i>Finalizar Venda</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% } %>
             </table>
         </div>
     </div>

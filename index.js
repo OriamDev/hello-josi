@@ -922,21 +922,26 @@ app.get('/vendas/create', (req, res) => {
         message = req.session.flash_message[0];
         req.session.flash_message = '';
     }
+    let clientes = [];
     let carrinho = req.session.carrinho ?? [];
     let subtotal = 0;
     let impostos = 0;
     let total = 0;
 
-    const query = `SELECT * FROM produtos WHERE estado_produto <> 'Indisponível'`;
-    db.query(query, (err, produtos) => {
+    const produtosQuery = `SELECT * FROM produtos WHERE estado_produto <> 'Indisponível'`;
+    const clientesQuery = `SELECT id_cliente, nome_cliente FROM clientes`;
+    const query = `${produtosQuery};${clientesQuery}`;
+    db.query(query, (err, result) => {
         if (err) { throw err; }
 
-        produtos = produtos.map(produto => {
+        let produtos = result[0].map(produto => {
             return {
                 ...produto,
                 precoHtml: gerarPrecoHtmlComDesconto(produto)
             }
         })
+
+        clientes = result[1];
 
         if(carrinho.length) {
             carrinho.forEach(produto => {
@@ -950,6 +955,7 @@ app.get('/vendas/create', (req, res) => {
         if(produtos) {
             return res.render('vendas/create', {
                 produtos: produtos,
+                clientes: clientes,
                 message: message,
                 carrinho: carrinho,
                 subtotal: subtotal,
@@ -988,6 +994,76 @@ app.get('/vendas/create/adicionar-produto/:id_produto', (req, res) => {
                 return res.redirect('/vendas/create');
             }
         })
+    }
+})
+app.get('/vendas/create/remover-produto/:id_produto', (req, res) => {
+    let message = [];
+    if(req.params.id_produto) {
+        let carrinho = req.session.carrinho;
+        req.session.carrinho = carrinho.filter(produto => produto.id_produto !== parseInt(req.params.id_produto));
+        message.push({type: 'success', text: 'Produto removido do carrinho!'})
+        req.session.flash_message = message;
+    }
+    return res.redirect('/vendas/create');
+})
+app.post('/vendas/finalizar-venda', (req, res) => {
+    let message = [];
+    if(req.body.id_cliente && req.session.carrinho && req.body.metodo_pagamento) {
+        let carrinho = req.session.carrinho;
+        const vendaQuery = `INSERT INTO pedidos (data_pedido, hora_pedido, metodo_pagamento, cliente_id, subtotal_pedidos, imposto_pedidos) VALUES (?,?,?,?,?,?)`;
+
+        let date = new Date();
+        let dataCompra = transformarDataParaInput(date);
+        let horaCompra = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+        let subtotal = 0;
+        carrinho.forEach(produto => {
+            subtotal += (produto.preco * produto.quantidade)
+        })
+        let impostos = subtotal * 0.23;
+
+        const params = [
+            dataCompra,
+            horaCompra,
+            req.body.metodo_pagamento,
+            req.body.id_cliente,
+            subtotal,
+            impostos
+        ];
+
+        db.query(vendaQuery, params, (err, venda) => {
+            if (err) {
+                message.push({type: 'danger', text: err.sqlMessage})
+                req.session.flash_message = message;
+                return res.redirect('/vendas/create');
+            }
+            if(venda) {
+                let id_pedido = venda.insertId;
+                const vendaProdutosQuery = `INSERT INTO pedido_produto (id_pedido, id_produto, cantidade_produto, preco_produto) VALUES (?,?,?,?)`;
+                carrinho.forEach(produto => {
+                    let params = [
+                        id_pedido,
+                        produto.id_produto,
+                        produto.quantidade,
+                        produto.preco
+                    ];
+                    db.query(vendaProdutosQuery, params, (err, result) => {
+                        if (err) {
+                            message.push({type: 'danger', text: err.sqlMessage})
+                            req.session.flash_message = message;
+                            return res.redirect('/vendas/create');
+                        }
+                    })
+                })
+                message.push({type: 'success', text: 'Venda registada com sucesso'})
+                req.session.flash_message = message;
+                return res.redirect('/vendas');
+            }
+        })
+
+    } else {
+        message.push({type: 'danger', text: 'Deve escolher um cliente'})
+        req.session.flash_message = message;
+        return res.redirect('/vendas/create');
     }
 })
 // +++++++++++++++++++++++++++++ FIM Rotas para gerir as vendas (CRUD)
