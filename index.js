@@ -923,6 +923,9 @@ app.get('/vendas/create', (req, res) => {
         req.session.flash_message = '';
     }
     let carrinho = req.session.carrinho ?? [];
+    let subtotal = 0;
+    let impostos = 0;
+    let total = 0;
 
     const query = `SELECT * FROM produtos WHERE estado_produto <> 'Indisponível'`;
     db.query(query, (err, produtos) => {
@@ -935,8 +938,24 @@ app.get('/vendas/create', (req, res) => {
             }
         })
 
+        if(carrinho.length) {
+            carrinho.forEach(produto => {
+                subtotal += (produto.preco * produto.quantidade)
+            })
+
+            impostos = subtotal * 0.23;
+            total = subtotal + impostos;
+        }
+
         if(produtos) {
-            return res.render('vendas/create', {produtos: produtos, message: message, carrinho: carrinho})
+            return res.render('vendas/create', {
+                produtos: produtos,
+                message: message,
+                carrinho: carrinho,
+                subtotal: subtotal,
+                impostos: impostos,
+                total: total
+            })
         }
     })
 })
@@ -948,6 +967,7 @@ app.get('/vendas/create/adicionar-produto/:id_produto', (req, res) => {
             if (err) { throw err; }
             if(result) {
                 let produto = result[0];
+                produto.preco = produto.desconto_produto ? (produto.preco_produto - (produto.preco_produto * (produto.desconto_produto / 100))).toFixed(2) : produto.preco_produto.toFixed(2);
                 let carrinho = req.session.carrinho ?? [];
 
                 //1. Se existe no carrinho atualizar a quantidade
