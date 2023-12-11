@@ -31,7 +31,7 @@
                                     <p class="card-text"><%- produto.precoHtml %></p>
                                     <a href="/vendas/create/adicionar-produto/<%= produto.id_produto %>" class="btn btn-sm btn-primary">
                                         <i class="fa fa-shopping-cart"></i>
-                                        Comprar
+                                        Vender
                                     </a>
                                 </div>
                             </div>
@@ -52,7 +52,8 @@
                 </tr>
                 </thead>
                 <tbody>
-                <% carrinho.forEach(produto => { %>
+                    <% if(carrinho) { %>
+                        <% carrinho.forEach(produto => { %>
                     <tr>
                     <td class="col-sm-8 col-md-8">
                         <div class="media">
@@ -73,6 +74,7 @@
                     </td>
                 </tr>
                 <% }) %>
+                    <% } %>
                 </tbody>
             </table>
             <table class="w-100">

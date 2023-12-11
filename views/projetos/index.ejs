@@ -31,7 +31,7 @@
                             <p class="card-text"><%= projeto.servico_projeto %></p>
                             <p class="card-text d-flex justify-content-between">
                                 <span><%= projeto.data_inicio_projeto.toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: 'numeric'}) %></span>
-                                <span><%= projeto.data_fim_projeto.toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: 'numeric'}) %></span>
+                                <span><%= projeto.data_fim_projeto ? projeto.data_fim_projeto.toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: 'numeric'}) : '' %></span>
                             </p>
                             <p class="card-text d-flex justify-content-between">
                                 <span><%= projeto.estado_projeto %></span>
@@ -41,7 +41,7 @@
                                 <div class="btn-group" role="group" aria-label="Basic example">
                                     <a href="/projetos/edit/<%= projeto.id_projeto %>" class="btn btn-sm btn-primary"><i class="fa fa-edit"></i></a>
                                     <form method="POST" action="/projetos/delete/<%= projeto.id_projeto %>">
-                                        <button type="submit"
+                                        <button type="button" onclick="confirm('Certeza que deseja remover o projeto?') ? this.parentElement.submit() : false"
                                                 style="border-top-left-radius: 0;border-bottom-left-radius: 0;"
                                                 class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
                                     </form>

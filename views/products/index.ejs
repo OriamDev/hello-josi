@@ -38,7 +38,7 @@
 
                     <tr>
                         <th scope="row"><%= index + 1 %></th>
-                        <td><img src="/uploads/<%= product.imagem_produto %>" alt="" width="50px;"></td>
+                        <td><img src="/uploads/<%= product.imagem_produto ?? 'photo-coming-soon.jpeg' %>" alt="" width="50px;"></td>
                         <td><%= product.nome_produto %></td>
                         <td><%= product.categoria_produto %></td>
                         <td><%= parseFloat(product.preco_produto).toFixed(2) %> €</td>
@@ -50,7 +50,7 @@
                                     <i class="fa fa-edit"></i>
                                 </a>
                                 <form method="POST" action="/products/delete/<%= product.id_produto %>">
-                                    <button type="submit"
+                                    <button type="button" onclick="confirm('Certeza que deseja remover o produto?') ? this.parentElement.submit() : false"
                                             style="border-top-left-radius: 0;border-bottom-left-radius: 0;"
                                             class="btn btn-danger"><i class="fa fa-trash"></i></button>
                                 </form>

@@ -4,7 +4,6 @@ const fileUpload = require("express-fileupload");
 const path = require("path");
 const app = express();
 const db = require("./db");
-const bcrypt = require("bcrypt");
 
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, 'public')))
@@ -17,6 +16,7 @@ const server = app.listen(8080, function () {
     const host = server.address().address;
     const port = server.address().port;
     console.log("servidor a ser executado em " + host + ":" + port);
+    console.info('Link => http://localhost:' + port);
 });
 
 const categoriasDoProduto = ['Digital books', 'Modelos 3D', 'Pressets', 'Template Website', 'Wallpapers'];
@@ -31,11 +31,110 @@ function transformarDataParaInput(data) {
     return `${year}-${month}-${day}`;
 }
 
-app.get('/dashboard', (req, res) => {
+function gerarPrecoHtmlComDesconto(produto) {
+    let preco = parseFloat(produto.preco_produto);
+    let descontoBadge = '';
+    let precoComDesconto = '';
+    let precoHtml = '';
+    if(produto.desconto_produto) {
+        let desconto = parseFloat(produto.desconto_produto);
+        precoComDesconto = (preco - (preco * (desconto / 100))).toFixed(2)
+        descontoBadge = `<span class="badge badge-danger position-absolute">-${desconto}%</span>`;
+        precoHtml += `<span class="text-muted" style="text-decoration: line-through;">${preco.toFixed(2)} €</span>
+            <span class="text-danger ml-2" style="font-size: 1.1rem;">${precoComDesconto} €</span>`;
+    } else {
+        precoHtml += `<span class="text-dark">${preco.toFixed(2)} €</span>`;
+    }
+    return precoHtml;
+}
+function auth(req, res, next) {
+    if(req.session.user) {
+        return next()
+    }
+    return res.redirect('/login')
+}
+function guest(req, res, next) {
+    if(req.session.user) {
+        return res.redirect('/dashboard')
+    }
+    return next()
+}
+
+app.get('/', (req, res) => {
+    let utilizador = req.session.user;
+
+    //Primeira visita ao sistema
+    //Verificar se existe um utilizador com email josi@teste.com
+    //Se não existe criar
+    const utilizadorQuery = `SELECT * FROM utilizadores WHERE email_utilizador = ? LIMIT 1`;
+    const adminNome = 'Josireth Rodriguez';
+    const adminEmail = 'josi@teste.com';
+    const adminPass = 'Pa$$w0rd!';
+    db.query(utilizadorQuery, [adminEmail], (err, result) => {
+        if(err) throw err;
+        //Não existe o utilizador com o email josi@teste.com
+        if (! result.length > 0) {
+            const insertUtilizadorQuery = `INSERT INTO utilizadores (nome_utilizador, email_utilizador, palavra_passe_utilizador) VALUES (?, ?, SHA(?))`;
+            db.query(insertUtilizadorQuery, [adminNome, adminEmail, adminPass], (err, result) => {
+                if(err) throw err;
+                if(result) {
+                    console.log('Utilizador admin foi criado corretamente!')
+                }
+            })
+        } else {
+            console.log('Utilizador admin já existe na base de dados!')
+        }
+    })
+
+    return res.render('inicio', {utilizador: utilizador})
+})
+app.get('/login', guest, (req, res) => {
+    let message;
+
+    if(req.session.flash_message) {
+        message = req.session.flash_message[0];
+        req.session.flash_message = '';
+    }
+
+    return res.render('login', {message: message})
+})
+app.post('/login', guest, (req, res) => {
+    let message = [];
+    if(req.body.email && req.body.password) {
+        const loginQuery = `SELECT * FROM utilizadores WHERE email_utilizador = ? AND palavra_passe_utilizador = SHA(?) LIMIT 1`;
+        db.query(loginQuery, [req.body.email, req.body.password], (err, result) => {
+            if(err) {
+                message.push({type: 'danger', text: err.sqlMessage})
+                req.session.flash_message = message;
+                return res.redirect('/login');
+            }
+            if(result.length > 0) {
+                let utilizador = result[0];
+                req.session.user = {id: utilizador.id_utilizador, nome: utilizador.nome_utilizador};
+                return res.redirect('/dashboard')
+            } else {
+                message.push({type: 'danger', text: 'As credenciais não são corretas'})
+                req.session.flash_message = message;
+                return res.redirect('/login');
+            }
+        })
+    } else {
+        message.push({type: 'danger', text: 'Email e palavra-passe são requeridos'})
+        req.session.flash_message = message;
+        return res.redirect('/login');
+    }
+})
+app.post('/fechar-sessao', auth, (req, res) => {
+    req.session.user = '';
+    return res.redirect('/');
+})
+
+app.get('/dashboard', auth, (req, res) => {
+    let utilizador = req.session.user;
 
     const totalVendasQuery = 'SELECT SUM(subtotal_pedidos) as total_vendas FROM pedidos';
     const projetosDecorrer = `SELECT COUNT(id_projeto) AS projetos_decorrer FROM projetos WHERE estado_projeto = 'A Decorrer'`;
-    const produtosDisponiveisQuery = `SELECT COUNT(id_produto) AS produtos_disponiveis FROM produtos WHERE estado_produto = 'Disponível'`;
+    const produtosDisponiveisQuery = `SELECT COUNT(id_produto) AS produtos_disponiveis FROM produtos WHERE estado_produto <> 'Indisponível'`;
     const proximosProjetosQuery = `SELECT nome_projeto, nome_cliente, data_fim_projeto FROM projetos INNER JOIN clientes 
                                                 USING (id_cliente) WHERE estado_projeto = 'A Decorrer' ORDER BY data_fim_projeto LIMIT 3`;
     const melhoresClientesQuery = `SELECT c.id_cliente, c.nome_cliente, c.pais_cliente, SUM(p.subtotal_pedidos) AS total 
@@ -55,6 +154,7 @@ app.get('/dashboard', (req, res) => {
             const melhoresClientes = result[4];
 
             return res.render('dashboard', {
+                utilizador: utilizador,
                 total_vendas: totalVendas,
                 projetos_decorrer: projetosDecorrer,
                 produtos_disponiveis: produtosDisponiveis,
@@ -66,7 +166,8 @@ app.get('/dashboard', (req, res) => {
 });
 
 /*** Rotas para gerir os produtos (CRUD) */
-app.get('/products', (req, res) => {
+app.get('/products', auth, (req, res) => {
+    let utilizador = req.session.user;
     const query = 'SELECT * FROM produtos';
     db.query(query, (err, result) => {
         if (err) {
@@ -81,11 +182,12 @@ app.get('/products', (req, res) => {
         }
 
         if(result) {
-            return res.render('products/index', {products: result, message: message})
+            return res.render('products/index', {products: result, message: message, utilizador:utilizador})
         }
     })
 })
-app.get('/products/create', (req, res) => {
+app.get('/products/create', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
 
     if(req.session.flash_message) {
@@ -96,10 +198,11 @@ app.get('/products/create', (req, res) => {
     return res.render('products/create', {
         categoriasDoProduto: categoriasDoProduto,
         estadosDoProduto: estadosDoProduto,
-        message: message
+        message: message,
+        utilizador: utilizador
     });
 })
-app.post('/products', (req, res) => {
+app.post('/products', auth, (req, res) => {
     let message = [];
 
     //1. check for all required form fields
@@ -110,7 +213,7 @@ app.post('/products', (req, res) => {
         if(req.body.estado_produto === 'Em promoção' && parseFloat(req.body.desconto_produto) === 0.00) {
             message.push({type: 'danger', text: 'Desconto é requerido se o estado é Em promoção'})
             req.session.flash_message = message;
-            return res.redirect('/products/create/');
+            return res.redirect('/products/create');
         }
 
         const query = `INSERT INTO produtos (nome_produto, categoria_produto, preco_produto, estado_produto, desconto_produto) VALUES (?,?,?,?,?)`;
@@ -127,7 +230,7 @@ app.post('/products', (req, res) => {
             if(err) {
                 message.push({type: 'danger', text: 'Erro na consulta SQL'})
                 req.session.flash_message = message;
-                return res.redirect('/products/create/');
+                return res.redirect('/products/create');
             }
 
             if(result) {
@@ -140,7 +243,7 @@ app.post('/products', (req, res) => {
                         if (err) {
                             message.push({type: 'danger', text: 'Erro no momento de mover o ficheiro'})
                             req.session.flash_message = message;
-                            return res.redirect('/products/create/');
+                            return res.redirect('/products/create');
                         } else {
                             const updateProductImage = `UPDATE produtos SET imagem_produto = ? WHERE id_produto = ?`;
                             db.query(updateProductImage, [filename, novoProdutoId], (err, result) => {
@@ -154,7 +257,7 @@ app.post('/products', (req, res) => {
 
                 message.push({type: 'success', text: 'O produto foi criado corretamente'})
                 req.session.flash_message = message;
-                return res.redirect('/products/');
+                return res.redirect('/products');
 
             }
 
@@ -163,10 +266,11 @@ app.post('/products', (req, res) => {
     } else {
         message.push({type: 'danger', text: 'Nome, categoria, preço e estado são requeridos'})
         req.session.flash_message = message;
-        return res.redirect('/products/create/');
+        return res.redirect('/products/create');
     }
 })
-app.get('/products/edit/:product_id', (req, res) => {
+app.get('/products/edit/:product_id', auth, (req, res) => {
+    let utilizador = req.session.user;
     const productQuery = `SELECT * FROM produtos WHERE id_produto = ? LIMIT 1`;
     let message = [];
     if(req.session.flash_message) {
@@ -183,11 +287,13 @@ app.get('/products/edit/:product_id', (req, res) => {
                 categoriasDoProduto: categoriasDoProduto,
                 estadosDoProduto: estadosDoProduto,
                 produto: produto,
-                message: message})
+                message: message,
+                utilizador: utilizador
+            })
         }
     })
 })
-app.post('/products/update/:product_id', (req, res) => {
+app.post('/products/update/:product_id', auth,(req, res) => {
     let message = [];
     const productId = req.params.product_id;
 
@@ -249,7 +355,7 @@ app.post('/products/update/:product_id', (req, res) => {
 
             message.push({type: 'success', text: 'O produto foi atualizado corretamente'})
             req.session.flash_message = message;
-            return res.redirect('/products/');
+            return res.redirect('/products');
         })
 
     } else {
@@ -259,7 +365,7 @@ app.post('/products/update/:product_id', (req, res) => {
     }
 
 })
-app.post('/products/delete/:product_id', (req, res) => {
+app.post('/products/delete/:product_id', auth,(req, res) => {
     if(req.params.product_id) {
         let message = [];
         const productId = req.params.product_id;
@@ -269,7 +375,7 @@ app.post('/products/delete/:product_id', (req, res) => {
             if(err) {
                 message.push({type: 'danger', text: err.sqlMessage })
                 req.session.flash_message = message;
-                return res.redirect('/products/');
+                return res.redirect('/products');
             }
 
             //orders were removed and now perform remove on products
@@ -279,12 +385,12 @@ app.post('/products/delete/:product_id', (req, res) => {
                     if(err) {
                         message.push({type: 'danger', text: err.sqlMessage })
                         req.session.flash_message = message;
-                        return res.redirect('/products/');
+                        return res.redirect('/products');
                     }
 
                     message.push({type: 'success', text: 'Produto corretamente apagado da base de dados'})
                     req.session.flash_message = message;
-                    return res.redirect('/products/');
+                    return res.redirect('/products');
                 })
             }
         })
@@ -293,7 +399,8 @@ app.post('/products/delete/:product_id', (req, res) => {
 // +++++++++++++++++++++++++++++ FIM Rotas para gerir os produtos (CRUD)
 
 /*** Rotas para gerir os funcionarios (CRUD) */
-app.get('/funcionarios', (req, res) => {
+app.get('/funcionarios', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
 
     if(req.session.flash_message) {
@@ -308,72 +415,64 @@ app.get('/funcionarios', (req, res) => {
         }
 
         if(result) {
-            return res.render('funcionarios/index', {funcionarios: result, message: message})
+            return res.render('funcionarios/index', {funcionarios: result, message: message, utilizador: utilizador})
         }
     })
 })
-app.get('/funcionarios/create', (req, res) => {
+app.get('/funcionarios/create', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
     if(req.session.flash_message) {
         message = req.session.flash_message[0];
         req.session.flash_message = '';
     }
 
-    return res.render('funcionarios/create', {servicos: servicos, message: message})
+    return res.render('funcionarios/create', {servicos: servicos, message: message, utilizador: utilizador})
 });
-app.post('/funcionarios', async (req, res) => {
+app.post('/funcionarios', auth, async (req, res) => {
     let message = [];
 
     //check for all required fields to create a "funcionario"
     if (req.body.nome_funcionario && req.body.email_funcionario && req.body.servico_funcionario
-        && req.body.salario_funcionario && req.body.regime_funcionario && req.body.data_nascimento_funcionario
-        && req.body.palavra_passe_funcionario && req.body.confirmar_palavra_passe_funcionario) {
+        && req.body.salario_funcionario && req.body.regime_funcionario && req.body.data_nascimento_funcionario) {
 
-        //check if password and confirm password are equal
-        if (req.body.palavra_passe_funcionario === req.body.confirmar_palavra_passe_funcionario) {
-            const funcionarioQuery = `INSERT INTO funcionarios (
-                nome_funcionario, email_funcionario, servico_funcionario, salario_funcionario, regime_funcionario, data_nascimento_funcionario, palavra_passe_funcionario)
-                VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        const funcionarioQuery = `INSERT INTO funcionarios (
+                nome_funcionario, email_funcionario, servico_funcionario, salario_funcionario, regime_funcionario, data_nascimento_funcionario)
+                VALUES (?, ?, ?, ?, ?, ?)`;
 
-            const hashedPassword = await bcrypt.hash(req.body.palavra_passe_funcionario, 10);
-            const params = [
-                req.body.nome_funcionario,
-                req.body.email_funcionario,
-                req.body.servico_funcionario,
-                req.body.salario_funcionario,
-                req.body.regime_funcionario,
-                req.body.data_nascimento_funcionario,
-                hashedPassword
-            ];
+        const params = [
+            req.body.nome_funcionario,
+            req.body.email_funcionario,
+            req.body.servico_funcionario,
+            req.body.salario_funcionario,
+            req.body.regime_funcionario,
+            req.body.data_nascimento_funcionario,
+        ];
 
-            db.query(funcionarioQuery, params, (err, result) => {
-                if(err) {
-                    throw err;
-                }
+        db.query(funcionarioQuery, params, (err, result) => {
+            if(err) {
+                throw err;
+            }
 
-                if(result.insertId) {
-                    message.push({type: 'success', text: 'O funcionario foi criado corretamente'})
-                    req.session.flash_message = message;
-                    return res.redirect('/funcionarios');
-                }
-            })
-        } else {
-            message.push({type: 'danger', text: 'Palavra-passe e a confirmação da palavra-passe devem ser iguais'})
-            req.session.flash_message = message;
-            return res.redirect('/funcionarios/create');
-        }
+            if(result.insertId) {
+                message.push({type: 'success', text: 'O funcionario foi criado corretamente'})
+                req.session.flash_message = message;
+                return res.redirect('/funcionarios');
+            }
+        })
 
 
     } else {
         message.push({
             type: 'danger',
-            text: 'Nome, email, serviço, salario, regime, data de nascimento, palavra-passe e a confirmação da palavra-passe são requeridos'
+            text: 'Nome, email, serviço, salario, regime, data de nascimento'
         })
         req.session.flash_message = message;
         return res.redirect('/funcionarios/create');
     }
 })
-app.get('/funcionarios/edit/:funcionario_id', (req, res) => {
+app.get('/funcionarios/edit/:funcionario_id', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
     if(req.session.flash_message) {
         message = req.session.flash_message[0];
@@ -387,11 +486,11 @@ app.get('/funcionarios/edit/:funcionario_id', (req, res) => {
             let funcionario = result[0];
             funcionario.data_nascimento_funcionario = transformarDataParaInput(funcionario.data_nascimento_funcionario)
 
-            return res.render('funcionarios/edit', {message: message, servicos: servicos, funcionario: funcionario})
+            return res.render('funcionarios/edit', {message: message, servicos: servicos, funcionario: funcionario, utilizador:utilizador})
         }
     })
 })
-app.post('/funcionarios/update/:funcionario_id', (req, res) => {
+app.post('/funcionarios/update/:funcionario_id', auth,(req, res) => {
     let message = [];
 
     //check for all required fields to create a "funcionario"
@@ -432,7 +531,7 @@ app.post('/funcionarios/update/:funcionario_id', (req, res) => {
         })
     }
 })
-app.post('/funcionarios/delete/:funcionario_id', (req, res) => {
+app.post('/funcionarios/delete/:funcionario_id', auth, (req, res) => {
     if(req.params.funcionario_id) {
         let message = [];
         const funcionarioId = req.params.funcionario_id;
@@ -466,7 +565,8 @@ app.post('/funcionarios/delete/:funcionario_id', (req, res) => {
 // +++++++++++++++++++++++++++++  FIM Rotas para gerir os funcionarios (CRUD)
 
 /*** Rotas para gerir os clientes (CRUD) */
-app.get('/clientes', (req, res) => {
+app.get('/clientes', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
 
     if(req.session.flash_message) {
@@ -481,20 +581,21 @@ app.get('/clientes', (req, res) => {
         }
 
         if(result) {
-            return res.render('clientes/index', {clientes: result, message: message})
+            return res.render('clientes/index', {clientes: result, message: message, utilizador:utilizador})
         }
     })
 })
-app.get('/clientes/create', (req, res) => {
+app.get('/clientes/create', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
     if(req.session.flash_message) {
         message = req.session.flash_message[0];
         req.session.flash_message = '';
     }
 
-    return res.render('clientes/create', {message: message})
+    return res.render('clientes/create', {message: message, utilizador:utilizador})
 });
-app.post('/clientes', (req, res) => {
+app.post('/clientes', auth, (req, res) => {
     let message = [];
     //check all required fields
     if(req.body.nome_cliente && req.body.email_cliente && req.body.morada_cliente
@@ -530,7 +631,8 @@ app.post('/clientes', (req, res) => {
         return res.redirect('/clientes/create');
     }
 })
-app.get('/clientes/edit/:cliente_id', (req, res) => {
+app.get('/clientes/edit/:cliente_id', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
     if(req.session.flash_message) {
         message = req.session.flash_message[0];
@@ -542,11 +644,11 @@ app.get('/clientes/edit/:cliente_id', (req, res) => {
 
         if(result) {
             let cliente = result[0];
-            return res.render('clientes/edit', {message: message, cliente: cliente})
+            return res.render('clientes/edit', {message: message, cliente: cliente, utilizador:utilizador})
         }
     })
 })
-app.post('/clientes/update/:cliente_id', (req, res) => {
+app.post('/clientes/update/:cliente_id', auth, (req, res) => {
     let message = [];
     if(req.session.flash_message) {
         message = req.session.flash_message[0];
@@ -584,7 +686,7 @@ app.post('/clientes/update/:cliente_id', (req, res) => {
         })
     }
 })
-app.post('/clientes/delete/:cliente_id', (req, res) => {
+app.post('/clientes/delete/:cliente_id', auth, (req, res) => {
     if(req.params.cliente_id) {
         let message = [];
         const clienteId = req.params.cliente_id;
@@ -630,7 +732,8 @@ app.post('/clientes/delete/:cliente_id', (req, res) => {
 // +++++++++++++++++++++++++++++ FIM Rotas para gerir os clientes (CRUD)
 
 /*** Rotas para gerir os projetos (CRUD) */
-app.get('/projetos', (req, res) => {
+app.get('/projetos', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
 
     if(req.session.flash_message) {
@@ -654,13 +757,13 @@ app.get('/projetos', (req, res) => {
             throw err;
         }
         if(projetos) {
-            return res.render('projetos/index', {projetos: projetos, message: message})
+            return res.render('projetos/index', {projetos: projetos, message: message, utilizador:utilizador})
         }
     })
 })
-app.get('/projetos/create', (req, res) => {
+app.get('/projetos/create', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
-    let clientes = [];
     if(req.session.flash_message) {
         message = req.session.flash_message[0];
         req.session.flash_message = '';
@@ -673,12 +776,13 @@ app.get('/projetos/create', (req, res) => {
                 message: message,
                 clientes: result,
                 servicos: servicos,
-                estadosDoProjeto: estadosDoProjeto
+                estadosDoProjeto: estadosDoProjeto,
+                utilizador:utilizador
             })
         }
     })
 })
-app.post('/projetos', (req, res) => {
+app.post('/projetos', auth, (req, res) => {
     let message = [];
     //check for required fields
     if(req.body.nome_projeto && req.body.id_cliente && req.body.servico_projeto && req.body.data_inicio_projeto && req.body.preco_projeto) {
@@ -690,7 +794,7 @@ app.post('/projetos', (req, res) => {
             req.body.servico_projeto,
             req.body.data_inicio_projeto,
             req.body.preco_projeto,
-            req.body.data_fim_projeto ?? null,
+            req.body.data_fim_projeto.length === 0 ? null : req.body.data_fim_projeto,
             req.body.estado_projeto ?? estadosDoProjeto[0]
         ];
 
@@ -712,7 +816,8 @@ app.post('/projetos', (req, res) => {
     }
 
 })
-app.get('/projetos/edit/:projeto_id', (req, res) => {
+app.get('/projetos/edit/:projeto_id', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
     if(req.session.flash_message) {
         message = req.session.flash_message[0];
@@ -735,12 +840,13 @@ app.get('/projetos/edit/:projeto_id', (req, res) => {
                 projeto: projeto,
                 clientes: clientes,
                 servicos: servicos,
-                estadosDoProjeto: estadosDoProjeto
+                estadosDoProjeto: estadosDoProjeto,
+                utilizador:utilizador
             })
         }
     })
 })
-app.post('/projetos/update/:projeto_id', (req, res) => {
+app.post('/projetos/update/:projeto_id', auth,(req, res) => {
     let message = [];
 
     if(req.params.projeto_id && req.body.nome_projeto && req.body.id_cliente && req.body.servico_projeto && req.body.data_inicio_projeto && req.body.preco_projeto) {
@@ -783,7 +889,8 @@ app.post('/projetos/update/:projeto_id', (req, res) => {
         return res.redirect('/projetos/create');
     }
 })
-app.get('/projetos/funcionarios/:projeto_id', (req, res) => {
+app.get('/projetos/funcionarios/:projeto_id', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
     if(req.params.projeto_id) {
 
@@ -812,14 +919,16 @@ app.get('/projetos/funcionarios/:projeto_id', (req, res) => {
                             projeto: projeto,
                             funcionarios: funcionarios,
                             funcionariosDoProjeto: funcionariosDoProjeto,
-                            message: message})
+                            message: message,
+                            utilizador:utilizador
+                        })
                     }
                 })
             }
         })
     }
 })
-app.post('/projetos/funcionarios/:projeto_id', (req, res) => {
+app.post('/projetos/funcionarios/:projeto_id', auth, (req, res) => {
     let message = [];
     if(req.params.projeto_id) {
         const removeFuncionariosQuery = `DELETE FROM funcionario_projetos WHERE id_projeto = ?`;
@@ -848,7 +957,7 @@ app.post('/projetos/funcionarios/:projeto_id', (req, res) => {
         return res.redirect('/projetos/funcionarios/'+req.params.projeto_id);
     }
 })
-app.post('/projetos/delete/:projeto_id', (req, res) => {
+app.post('/projetos/delete/:projeto_id', auth, (req, res) => {
     if(req.params.projeto_id) {
         let message = [];
         const projetoId = req.params.projeto_id;
@@ -885,7 +994,8 @@ app.post('/projetos/delete/:projeto_id', (req, res) => {
 // +++++++++++++++++++++++++++++ FIM Rotas para gerir os projetos (CRUD)
 
 /*** Rotas para gerir as vendas (CRUD) */
-app.get('/vendas', (req, res) => {
+app.get('/vendas', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
     if(req.session.flash_message) {
         message = req.session.flash_message[0];
@@ -895,28 +1005,12 @@ app.get('/vendas', (req, res) => {
     db.query(vendasQuery, (err, vendas) => {
         if(err) { throw err; }
         if(vendas) {
-            return res.render('vendas/index', {vendas: vendas, message: message})
+            return res.render('vendas/index', {vendas: vendas, message: message, utilizador:utilizador})
         }
     })
 })
-
-function gerarPrecoHtmlComDesconto(produto) {
-    let preco = parseFloat(produto.preco_produto);
-    let descontoBadge = '';
-    let precoComDesconto = '';
-    let precoHtml = '';
-    if(produto.desconto_produto) {
-        let desconto = parseFloat(produto.desconto_produto);
-        precoComDesconto = (preco - (preco * (desconto / 100))).toFixed(2)
-        descontoBadge = `<span class="badge badge-danger position-absolute">-${desconto}%</span>`;
-        precoHtml += `<span class="text-muted" style="text-decoration: line-through;">${preco.toFixed(2)} €</span>
-            <span class="text-danger ml-2" style="font-size: 1.1rem;">${precoComDesconto} €</span>`;
-    } else {
-        precoHtml += `<span class="text-dark">${preco.toFixed(2)} €</span>`;
-    }
-    return precoHtml;
-}
-app.get('/vendas/create', (req, res) => {
+app.get('/vendas/create', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
     if(req.session.flash_message) {
         message = req.session.flash_message[0];
@@ -960,12 +1054,14 @@ app.get('/vendas/create', (req, res) => {
                 carrinho: carrinho,
                 subtotal: subtotal,
                 impostos: impostos,
-                total: total
+                total: total,
+                utilizador:utilizador
             })
         }
     })
 })
-app.get('/vendas/create/adicionar-produto/:id_produto', (req, res) => {
+app.get('/vendas/create/adicionar-produto/:id_produto', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
     if(req.params.id_produto) {
         const produtoQuery = `SELECT * FROM produtos WHERE id_produto = ? AND estado_produto <> 'Indisponível' LIMIT 1`;
@@ -974,10 +1070,10 @@ app.get('/vendas/create/adicionar-produto/:id_produto', (req, res) => {
             if(result) {
                 let produto = result[0];
                 produto.preco = produto.desconto_produto ? (produto.preco_produto - (produto.preco_produto * (produto.desconto_produto / 100))).toFixed(2) : produto.preco_produto.toFixed(2);
-                let carrinho = req.session.carrinho ?? [];
+                let carrinho = typeof req.session.carrinho === 'undefined' ? [] : req.session.carrinho;
 
                 //1. Se existe no carrinho atualizar a quantidade
-                if(carrinho.some(obj => obj.id_produto === parseInt(req.params.id_produto))) {
+                if(carrinho && carrinho.some(obj => obj.id_produto === parseInt(req.params.id_produto))) {
                     let produtoNoCarrinho = carrinho.find(produto => produto.id_produto === parseInt(req.params.id_produto));
                     if(produtoNoCarrinho) {
                         produtoNoCarrinho.quantidade += 1;
@@ -996,7 +1092,8 @@ app.get('/vendas/create/adicionar-produto/:id_produto', (req, res) => {
         })
     }
 })
-app.get('/vendas/create/remover-produto/:id_produto', (req, res) => {
+app.get('/vendas/create/remover-produto/:id_produto', auth, (req, res) => {
+    let utilizador = req.session.user;
     let message = [];
     if(req.params.id_produto) {
         let carrinho = req.session.carrinho;
@@ -1006,7 +1103,7 @@ app.get('/vendas/create/remover-produto/:id_produto', (req, res) => {
     }
     return res.redirect('/vendas/create');
 })
-app.post('/vendas/finalizar-venda', (req, res) => {
+app.post('/vendas/finalizar-venda', auth,(req, res) => {
     let message = [];
     if(req.body.id_cliente && req.session.carrinho && req.body.metodo_pagamento) {
         let carrinho = req.session.carrinho;
@@ -1054,6 +1151,7 @@ app.post('/vendas/finalizar-venda', (req, res) => {
                         }
                     })
                 })
+                req.session.carrinho = '';
                 message.push({type: 'success', text: 'Venda registada com sucesso'})
                 req.session.flash_message = message;
                 return res.redirect('/vendas');
@@ -1066,12 +1164,41 @@ app.post('/vendas/finalizar-venda', (req, res) => {
         return res.redirect('/vendas/create');
     }
 })
+app.get('/vendas/ver/:id_pedido', auth, (req, res) => {
+    let utilizador = req.session.user;
+    let message = [];
+    if(req.params.id_pedido) {
+        const vendaQuery = `SELECT * FROM pedidos WHERE id_pedido = ? LIMIT 1`;
+        const vendaProdutosQuery = `SELECT pp.*, p.nome_produto, p.categoria_produto, p.imagem_produto FROM pedido_produto as pp INNER JOIN produtos p on p.id_produto = pp.id_produto WHERE id_pedido = ?`
+        const query = `${vendaQuery};${vendaProdutosQuery}`;
+        db.query(query, [req.params.id_pedido, req.params.id_pedido], (err, result) => {
+            if (err) {
+                message.push({type: 'danger', text: err.sqlMessage})
+                req.session.flash_message = message;
+                return res.redirect('/vendas');
+            }
+            if(result) {
+                let venda = result[0][0];
+                let produtos = result[1];
+
+                const clienteQuery = `SELECT * FROM clientes WHERE id_cliente = ? LIMIT 1`;
+                db.query(clienteQuery, [venda.cliente_id], (err, cliente) => {
+                    if (err) {
+                        message.push({type: 'danger', text: err.sqlMessage})
+                        req.session.flash_message = message;
+                        return res.redirect('/vendas', {utilizador: utilizador});
+                    }
+                    if(cliente) {
+                        return res.render('vendas/show', {venda: venda, produtos: produtos, cliente: cliente[0], utilizador:utilizador})
+                    }
+                })
+            }
+        })
+    }
+})
 // +++++++++++++++++++++++++++++ FIM Rotas para gerir as vendas (CRUD)
 
-
-
-
-
 app.get('*', function (req, res) {
-    res.render('404');
+    let utilizador = req.session.user;
+    res.render('404', {utilizador: utilizador});
 });

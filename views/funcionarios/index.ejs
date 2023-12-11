@@ -51,7 +51,7 @@
                                     <i class="fa fa-edit"></i>
                                 </a>
                                 <form method="POST" action="/funcionarios/delete/<%= funcionario.id_funcionario %>">
-                                    <button type="submit"
+                                    <button type="button" onclick="confirm('Certeza que deseja remover o funcionario?') ? this.parentElement.submit() : false"
                                             style="border-top-left-radius: 0;border-bottom-left-radius: 0;"
                                             class="btn btn-danger"><i class="fa fa-trash"></i></button>
                                 </form>

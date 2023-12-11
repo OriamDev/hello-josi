@@ -1,0 +1,101 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/sidebar')%>
+
+<%- include('../partials/topbar') %>
+
+<div class="container-fluid">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Venda -- <%= venda.id_pedido %></h1>
+        <a href="/vendas" class="d-none d-sm-inline-block btn btn-primary shadow-sm"><i class="fa fa-arrow-left mr-2"></i>Voltar</a>
+    </div>
+
+    <div class="row my-3">
+        <div class="col-lg-6">
+            <p class="mb-0">Cliente</p>
+            <h5 class="mb-0"><b><%= cliente.nome_cliente %></b></h5>
+            <p class="mb-0"><%= cliente.morada_cliente %>, <%= cliente.cidade_cliente %>, <%= cliente.pais_cliente %></p>
+            <p class="mb-0"><%= cliente.telefone_cliente %></p>
+            <p class="mb-0"><%= cliente.email_cliente %></p>
+        </div>
+        <div class="col-lg-6">
+            <div class="row">
+                <div class="col-lg-12">
+                    <table>
+                        <tbody>
+                        <tr>
+                            <td>Venda No</td>
+                            <td class="px-3">:</td>
+                            <td><%= venda.id_pedido %></td>
+                        </tr>
+                        <tr>
+                            <td>Data da venda</td>
+                            <td class="px-3">:</td>
+                            <td><%= venda.data_pedido.toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: 'numeric'}) %></td>
+                        </tr>
+                        <tr>
+                            <td>Hora da venda</td>
+                            <td class="px-3">:</td>
+                            <td><%= venda.hora_pedido %></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Produto</th>
+                    <th scope="col">Quantidade</th>
+                    <th scope="col">Preço</th>
+                    <th scope="col">Total</th>
+                </tr>
+                </thead>
+                <tbody>
+                <% produtos.forEach(produto => { %>
+                    <tr>
+                        <td>1</td>
+                        <td>
+                            <b><%= produto.nome_produto %></b>
+                            <p><%= produto.categoria_produto %></p>
+                        </td>
+                        <td><%= produto.cantidade_produto %></td>
+                        <td><%= produto.preco_produto %> €</td>
+                        <td><%= produto.preco_produto * produto.cantidade_produto %> €</td>
+                    </tr>
+                <% }) %>
+
+                <tr>
+                    <td colspan="3"></td>
+                    <td><b>SUB Total</b></td>
+                    <td><b><%= venda.subtotal_pedidos.toFixed(2) %></b>€</td>
+                </tr>
+                <tr>
+                    <td colspan="3"></td>
+                    <td><b>Imposto 23%</b></td>
+                    <td><b><%= venda.imposto_pedidos.toFixed(2) %></b>€</td>
+                </tr>
+                <tr style="background: #E6E4E7; color: #2850C3;">
+                    <td colspan="3"></td>
+                    <td><b>TOTAL</b></td>
+                    <td><b><%= (venda.subtotal_pedidos + venda.imposto_pedidos).toFixed(2) %>€</b></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <h5 class="ml-5 border-bottom">Metodo de pagamento:  <span class="h6"><%= venda.metodo_pagamento %></span></h5>
+        </div>
+        <div class="col-lg-6"></div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
