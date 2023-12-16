@@ -67,7 +67,7 @@
                         </td>
                         <td><%= produto.cantidade_produto %></td>
                         <td><%= produto.preco_produto %> €</td>
-                        <td><%= produto.preco_produto * produto.cantidade_produto %> €</td>
+                        <td><%= (produto.preco_produto * produto.cantidade_produto).toFixed(2) %> €</td>
                     </tr>
                 <% }) %>
 

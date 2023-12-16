@@ -135,13 +135,18 @@ app.get('/dashboard', auth, (req, res) => {
     const totalVendasQuery = 'SELECT SUM(subtotal_pedidos) as total_vendas FROM pedidos';
     const projetosDecorrer = `SELECT COUNT(id_projeto) AS projetos_decorrer FROM projetos WHERE estado_projeto = 'A Decorrer'`;
     const produtosDisponiveisQuery = `SELECT COUNT(id_produto) AS produtos_disponiveis FROM produtos WHERE estado_produto <> 'Indisponível'`;
-    const proximosProjetosQuery = `SELECT nome_projeto, nome_cliente, data_fim_projeto FROM projetos INNER JOIN clientes 
+    const proximosProjetosQuery = `SELECT nome_projeto, nome_cliente, data_fim_projeto, servico_projeto FROM projetos INNER JOIN clientes 
                                                 USING (id_cliente) WHERE estado_projeto = 'A Decorrer' ORDER BY data_fim_projeto LIMIT 3`;
     const melhoresClientesQuery = `SELECT c.id_cliente, c.nome_cliente, c.pais_cliente, SUM(p.subtotal_pedidos) AS total 
                                                 FROM pedidos p INNER JOIN clientes c ON p.cliente_id = c.id_cliente GROUP BY c.id_cliente, c.nome_cliente, c.pais_cliente 
-                                                ORDER BY total DESC LIMIT 3;`;
+                                                ORDER BY total DESC LIMIT 3`;
+    const servicoMaisUtilizado = `SELECT p.servico_projeto, COUNT(*) AS servicos_count FROM projetos AS p GROUP BY p.servico_projeto ORDER BY servicos_count DESC LIMIT 1`;
+    const produtoMaisVendido = `SELECT p.nome_produto, COUNT(*) AS produtos_count FROM produtos AS p JOIN pedido_produto AS pp ON p.id_produto = pp.id_produto GROUP BY p.id_produto 
+                                ORDER BY produtos_count DESC LIMIT 1`;
+    const produtoComMaiorTotalDeVendas = `SELECT nome_produto, SUM(pp.preco_produto * pp.cantidade_produto) AS total_vendas FROM pedido_produto AS pp JOIN produtos ON pp.id_produto = produtos.id_produto
+                                            GROUP BY pp.id_produto ORDER BY total_vendas DESC LIMIT 1`;
 
-    const query = `${totalVendasQuery};${projetosDecorrer};${produtosDisponiveisQuery};${proximosProjetosQuery};${melhoresClientesQuery}`;
+    const query = `${totalVendasQuery};${projetosDecorrer};${produtosDisponiveisQuery};${proximosProjetosQuery};${melhoresClientesQuery};${servicoMaisUtilizado};${produtoMaisVendido};${produtoComMaiorTotalDeVendas}`;
 
     db.query(query, (err, result) => {
         if (err) throw err;
@@ -152,6 +157,9 @@ app.get('/dashboard', auth, (req, res) => {
             const produtosDisponiveis = result[2][0].produtos_disponiveis;
             const proximosProjetos = result[3];
             const melhoresClientes = result[4];
+            const servicoMaisUtilizado = result[5][0];
+            const produtoMaisVendido = result[6][0];
+            const produtoComMaiorTotalDeVendas = result[7][0];
 
             return res.render('dashboard', {
                 utilizador: utilizador,
@@ -159,7 +167,10 @@ app.get('/dashboard', auth, (req, res) => {
                 projetos_decorrer: projetosDecorrer,
                 produtos_disponiveis: produtosDisponiveis,
                 proximosProjetos: proximosProjetos,
-                melhoresClientes: melhoresClientes
+                melhoresClientes: melhoresClientes,
+                servicoMaisUtilizado: servicoMaisUtilizado,
+                produtoMaisVendido: produtoMaisVendido,
+                produtoComMaiorTotalDeVendas: produtoComMaiorTotalDeVendas
             });
         }
     })

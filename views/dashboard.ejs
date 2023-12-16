@@ -47,6 +47,55 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Serviço mais procurado</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= servicoMaisUtilizado.servico_projeto %></div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="h5 font-weight-bold "><%= servicoMaisUtilizado.servicos_count %></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Produto mais vendido</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= produtoMaisVendido.nome_produto %></div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="h5 font-weight-bold "><%= produtoMaisVendido.produtos_count %></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Produto com o maior total de vendas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= produtoComMaiorTotalDeVendas.nome_produto %></div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="h5 font-weight-bold "><%= produtoComMaiorTotalDeVendas.total_vendas.toFixed(2) %> €</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row">
@@ -62,10 +111,10 @@
                             <a href="#" class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1"><%= projeto.nome_projeto %></h5>
-                                    <small><%= projeto.data_fim_projeto.toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: 'numeric'}) %></small>
+                                    <small><%= projeto.data_fim_projeto ? projeto.data_fim_projeto.toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: 'numeric'}) : '' %></small>
                                 </div>
                                 <p class="mb-1"><%= projeto.nome_cliente %></p>
-                                <small>{projeto1_servicio}</small>
+                                <small><%= projeto.servico_projeto %></small>
                             </a>
                         <% }) %>
                     </div>

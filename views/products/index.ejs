@@ -19,7 +19,7 @@
 
     <div class="container-fluid">
 
-        <table class="table">
+        <table class="table" id="dataTable">
             <thead>
             <tr>
                 <th>#</th>
@@ -38,7 +38,7 @@
 
                     <tr>
                         <th scope="row"><%= index + 1 %></th>
-                        <td><img src="/uploads/<%= product.imagem_produto ?? 'photo-coming-soon.jpeg' %>" alt="" width="50px;"></td>
+                        <td><img src="/uploads/<%= product.imagem_produto ?? 'photo-coming-soon.jpeg' %>" alt="" width="35px;"></td>
                         <td><%= product.nome_produto %></td>
                         <td><%= product.categoria_produto %></td>
                         <td><%= parseFloat(product.preco_produto).toFixed(2) %> €</td>
