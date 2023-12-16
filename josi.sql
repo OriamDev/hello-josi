@@ -1,10 +1,10 @@
 -- -------------------------------------------------------------
--- TablePlus 5.6.6(520)
+-- TablePlus 5.6.8(522)
 --
 -- https://tableplus.com/
 --
 -- Database: josi
--- Generation Time: 2023-12-11 16:08:35.9500
+-- Generation Time: 2023-12-16 21:01:06.5400
 -- -------------------------------------------------------------
 
 
@@ -36,11 +36,11 @@ CREATE TABLE `funcionario_projetos` (
   `id_funcionario` bigint unsigned NOT NULL,
   `id_projeto` bigint unsigned NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `funcionario_projetos_id_projeto_foreign` (`id_projeto`),
-  KEY `funcionario_projetos_id_funcionario_foreign` (`id_funcionario`),
-  CONSTRAINT `funcionario_projetos_id_funcionario_foreign` FOREIGN KEY (`id_funcionario`) REFERENCES `funcionarios` (`id_funcionario`),
-  CONSTRAINT `funcionario_projetos_id_projeto_foreign` FOREIGN KEY (`id_projeto`) REFERENCES `projetos` (`id_projeto`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `id_funcionario` (`id_funcionario`),
+  KEY `id_projeto` (`id_projeto`),
+  CONSTRAINT `funcionario_projetos_ibfk_1` FOREIGN KEY (`id_funcionario`) REFERENCES `funcionarios` (`id_funcionario`) ON DELETE CASCADE,
+  CONSTRAINT `funcionario_projetos_ibfk_2` FOREIGN KEY (`id_projeto`) REFERENCES `projetos` (`id_projeto`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=146 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `funcionarios`;
 CREATE TABLE `funcionarios` (
@@ -52,7 +52,7 @@ CREATE TABLE `funcionarios` (
   `email_funcionario` text NOT NULL,
   `servico_funcionario` text NOT NULL,
   PRIMARY KEY (`id_funcionario`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `pedido_produto`;
 CREATE TABLE `pedido_produto` (
@@ -62,11 +62,11 @@ CREATE TABLE `pedido_produto` (
   `cantidade_produto` int NOT NULL,
   `preco_produto` double(8,2) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `pedido_produto_id_produto_foreign` (`id_produto`),
   KEY `id_pedido` (`id_pedido`),
+  KEY `id_produto` (`id_produto`),
   CONSTRAINT `pedido_produto_ibfk_1` FOREIGN KEY (`id_pedido`) REFERENCES `pedidos` (`id_pedido`) ON DELETE CASCADE,
-  CONSTRAINT `pedido_produto_id_produto_foreign` FOREIGN KEY (`id_produto`) REFERENCES `produtos` (`id_produto`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `pedido_produto_ibfk_2` FOREIGN KEY (`id_produto`) REFERENCES `produtos` (`id_produto`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1147 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `pedidos`;
 CREATE TABLE `pedidos` (
@@ -80,7 +80,7 @@ CREATE TABLE `pedidos` (
   PRIMARY KEY (`id_pedido`),
   KEY `pedidos_cliente_id_foreign` (`cliente_id`),
   CONSTRAINT `pedidos_cliente_id_foreign` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id_cliente`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `produtos`;
 CREATE TABLE `produtos` (
@@ -92,7 +92,7 @@ CREATE TABLE `produtos` (
   `desconto_produto` double(8,2) DEFAULT NULL,
   `imagem_produto` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   PRIMARY KEY (`id_produto`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `projetos`;
 CREATE TABLE `projetos` (
@@ -106,7 +106,7 @@ CREATE TABLE `projetos` (
   `servico_projeto` text,
   PRIMARY KEY (`id_projeto`),
   KEY `projetos_id_cliente_index` (`id_cliente`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 DROP TABLE IF EXISTS `utilizadores`;
 CREATE TABLE `utilizadores` (
@@ -115,7 +115,7 @@ CREATE TABLE `utilizadores` (
   `palavra_passe_utilizador` text NOT NULL,
   `id_utilizador` bigint NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id_utilizador`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 
